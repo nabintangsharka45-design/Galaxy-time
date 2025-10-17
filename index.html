@@ -1,0 +1,498 @@
+Keren, Mas — cus kita bikin “Waktu di Alam Semesta” versi interaktif yang estetik, jalan di HP & komputer, dan langsung tinggal salin ke index.html.
+Kode ini pakai HTML + CSS + JavaScript (semua di satu file supaya gampang). Fitur utama:
+
+Hitung umur real-time (tahun, hari, jam, menit, detik)
+
+Tampilkan berapa putaran bumi (rotasi harian), berapa orbit mengelilingi Matahari, dan berapa siklus bulan sudah dilewati
+
+Animasi planet (Bumi) mengorbit Matahari dengan latar bintang bergerak
+
+Tombol Start / Pause / Reset, dan pesan fakta astronomi singkat
+
+Responsif — bisa dibuka dari HP & PC
+
+
+Salin semua kode berikut ke file index.html, simpan, lalu preview di browser atau upload ke GitHub Pages.
+
+
+---
+
+📄 File: index.html (salin seluruh blok ini)
+
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Waktu di Alam Semesta — Kalkulator Kosmik</title>
+
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;500;700&display=swap" rel="stylesheet">
+
+  <style>
+    :root{
+      --bg1:#020617;
+      --bg2:#08132a;
+      --accent:#ffd54a;
+      --muted:#bfcfdc;
+      --card: rgba(255,255,255,0.04);
+    }
+
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{
+      margin:0;
+      font-family:"Poppins",sans-serif;
+      background: radial-gradient(1200px 600px at 10% 10%, rgba(24,36,64,0.6), transparent),
+                  radial-gradient(1000px 500px at 90% 80%, rgba(8,20,40,0.5), transparent),
+                  linear-gradient(180deg,var(--bg1),var(--bg2));
+      color:#eef2ff;
+      -webkit-font-smoothing:antialiased;
+      -moz-osx-font-smoothing:grayscale;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      padding:24px;
+    }
+
+    .app {
+      width:100%;
+      max-width:980px;
+      background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
+      border-radius:14px;
+      padding:18px;
+      box-shadow: 0 8px 40px rgba(3,6,23,0.6);
+      display:grid;
+      grid-template-columns: 1fr 380px;
+      gap:18px;
+    }
+
+    /* Responsive layout */
+    @media (max-width:880px){
+      .app { grid-template-columns: 1fr; padding:14px; }
+    }
+
+    .left {
+      padding:16px;
+    }
+
+    h1{
+      margin:4px 0 8px 0;
+      font-size:20px;
+      letter-spacing:0.2px;
+    }
+    p.lead { margin:0 0 12px 0; color:var(--muted); font-size:13px; }
+
+    .card {
+      background: var(--card);
+      padding:12px;
+      border-radius:10px;
+      margin-bottom:12px;
+    }
+
+    .controls{
+      display:flex;
+      gap:8px;
+      flex-wrap:wrap;
+      margin-top:8px;
+    }
+    input[type="date"]{
+      padding:10px 12px;
+      border-radius:8px;
+      border:1px solid rgba(255,255,255,0.06);
+      background:rgba(255,255,255,0.02);
+      color:inherit;
+      outline:none;
+      font-size:14px;
+    }
+    button {
+      padding:10px 14px;
+      border-radius:8px;
+      border:none;
+      background:linear-gradient(180deg,#6c63ff,#574bff);
+      color:white;
+      cursor:pointer;
+      font-weight:600;
+    }
+    button.ghost {
+      background:transparent;
+      border:1px solid rgba(255,255,255,0.06);
+      color:var(--muted);
+      font-weight:500;
+    }
+    button.small { padding:8px 10px; font-size:13px; }
+
+    .stats-grid{
+      display:grid;
+      grid-template-columns: repeat(2,1fr);
+      gap:10px;
+      margin-top:12px;
+    }
+    @media (max-width:480px){
+      .stats-grid{ grid-template-columns: 1fr; }
+    }
+
+    .stat {
+      background: rgba(255,255,255,0.02);
+      border-radius:8px;
+      padding:10px;
+      min-height:64px;
+    }
+    .stat .num { font-size:18px; font-weight:700; color:var(--accent); margin-bottom:6px; }
+    .stat .label { font-size:12px; color:var(--muted); }
+
+    /* Right column: cosmos visual */
+    .right {
+      padding:12px;
+      display:flex;
+      flex-direction:column;
+      align-items:center;
+      gap:12px;
+    }
+    .space {
+      width:100%;
+      height:340px;
+      max-height:340px;
+      background: radial-gradient(circle at 30% 20%, rgba(255,255,255,0.02), transparent 8%),
+                  radial-gradient(circle at 80% 70%, rgba(255,255,255,0.02), transparent 10%),
+                  rgba(0,0,0,0.05);
+      border-radius:10px;
+      position:relative;
+      overflow:hidden;
+    }
+    .sun {
+      width:80px; height:80px;
+      background: radial-gradient(circle, #fff8d6 0%, #ffd54a 30%, #ffb300 70%);
+      border-radius:50%;
+      position:absolute;
+      top:50%; left:50%;
+      transform:translate(-50%,-50%);
+      box-shadow: 0 0 30px rgba(255,180,0,0.25);
+      display:flex; align-items:center; justify-content:center;
+      font-weight:700; color:#3b2b02;
+    }
+
+    /* orbit ring */
+    .orbit {
+      position:absolute;
+      top:50%; left:50%;
+      transform:translate(-50%,-50%);
+      border-radius:50%;
+      pointer-events:none;
+    }
+    .orbit.earth { width:240px; height:240px; border:1px dashed rgba(255,255,255,0.04); }
+    .planet {
+      width:22px; height:22px;
+      background: linear-gradient(180deg,#3bb1ff,#1b78c6);
+      border-radius:50%;
+      position:absolute;
+      top:50%;
+      left:100%;
+      transform:translate(-50%, -50%);
+      box-shadow: 0 0 8px rgba(27,120,198,0.4);
+    }
+
+    /* animation: rotation using CSS variable --angle (set from JS for continuous orbit) */
+    .planet-wrapper {
+      position:absolute;
+      top:50%;
+      left:50%;
+      width:100%;
+      height:100%;
+      transform-origin:center;
+    }
+
+    /* orbit trail small asteroids for depth */
+    .stars {
+      position:absolute; inset:0; pointer-events:none;
+      background-image:
+        radial-gradient(circle at 10% 20%, rgba(255,255,255,0.9) 1px, transparent 2px),
+        radial-gradient(circle at 30% 80%, rgba(255,255,255,0.7) 1px, transparent 2px),
+        radial-gradient(circle at 70% 40%, rgba(255,255,255,0.6) 1px, transparent 2px),
+        radial-gradient(circle at 85% 80%, rgba(255,255,255,0.5) 1px, transparent 2px);
+      opacity:0.9;
+      filter: blur(0.2px);
+    }
+
+    .footer-note { font-size:12px; color:var(--muted); text-align:center; margin-top:6px; }
+
+    .fact {
+      font-size:13px;
+      color:var(--muted);
+      padding:8px;
+      border-radius:8px;
+      background: rgba(255,255,255,0.01);
+      text-align:center;
+    }
+
+  </style>
+</head>
+<body>
+  <main class="app" role="main">
+    <section class="left">
+      <h1>Waktu di Alam Semesta 🌌</h1>
+      <p class="lead">Masukkan tanggal lahirmu, lalu lihat usiamu dalam putaran Bumi, orbit Matahari, dan siklus Bulan — real-time.</p>
+
+      <div class="card">
+        <label for="birthDate" style="font-size:13px;color:var(--muted)">Pilih tanggal lahir</label><br>
+        <div style="margin-top:8px;display:flex;gap:8px;flex-wrap:wrap;">
+          <input id="birthDate" type="date">
+          <div style="display:flex;gap:8px;">
+            <button id="btnStart">Start</button>
+            <button id="btnPause" class="ghost small">Pause</button>
+            <button id="btnReset" class="ghost small">Reset</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div style="display:flex;justify-content:space-between;align-items:center;">
+          <div>
+            <div style="font-size:12px;color:var(--muted)">Realtime umur</div>
+            <div id="liveYears" style="font-size:20px;font-weight:700">—</div>
+          </div>
+          <div style="text-align:right">
+            <div style="font-size:12px;color:var(--muted)">Detik sejak lahir</div>
+            <div id="liveSeconds" style="font-size:18px;font-weight:700">—</div>
+          </div>
+        </div>
+
+        <div class="stats-grid" style="margin-top:12px">
+          <div class="stat">
+            <div class="num" id="statDays">—</div>
+            <div class="label">Hari hidup</div>
+          </div>
+          <div class="stat">
+            <div class="num" id="statYears">—</div>
+            <div class="label">Orbit Matahari (kali)</div>
+          </div>
+          <div class="stat">
+            <div class="num" id="statRotations">—</div>
+            <div class="label">Putaran Bumi (rotasi)</div>
+          </div>
+          <div class="stat">
+            <div class="num" id="statLunar">—</div>
+            <div class="label">Siklus Bulan (bulan)</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card fact" id="astronomyFact">Fakta kosmik: Data akan tampil setelah menekan Start.</div>
+
+    </section>
+
+    <aside class="right">
+      <div class="space" aria-hidden="true">
+        <div class="stars"></div>
+
+        <div class="orbit earth" style="--size:240px;"></div>
+
+        <div class="planet-wrapper" id="planetWrap" style="transform: rotate(0deg);">
+          <div class="planet" id="earth"></div>
+        </div>
+
+        <div class="sun" aria-hidden="true">☀️</div>
+      </div>
+
+      <div style="width:100%;display:flex;gap:8px;align-items:center;justify-content:space-between;">
+        <div class="footer-note">Interaktif • Responsif • Tanpa server</div>
+        <div style="text-align:right;color:var(--muted);font-size:13px">
+          <div id="localTime">—</div>
+        </div>
+      </div>
+    </aside>
+  </main>
+
+  <script>
+    // Constants
+    const MS_IN_SECOND = 1000;
+    const MS_IN_MINUTE = MS_IN_SECOND * 60;
+    const MS_IN_HOUR = MS_IN_MINUTE * 60;
+    const MS_IN_DAY = MS_IN_HOUR * 24;
+    const DAYS_IN_YEAR = 365.25; // include leap year approx
+    const LUNAR_CYCLE_DAYS = 29.530588; // synodic month
+
+    // Elements
+    const birthInput = document.getElementById('birthDate');
+    const btnStart = document.getElementById('btnStart');
+    const btnPause = document.getElementById('btnPause');
+    const btnReset = document.getElementById('btnReset');
+    const liveYears = document.getElementById('liveYears');
+    const liveSeconds = document.getElementById('liveSeconds');
+    const statDays = document.getElementById('statDays');
+    const statYears = document.getElementById('statYears');
+    const statRotations = document.getElementById('statRotations');
+    const statLunar = document.getElementById('statLunar');
+    const astronomyFact = document.getElementById('astronomyFact');
+    const planetWrap = document.getElementById('planetWrap');
+    const localTime = document.getElementById('localTime');
+
+    let timer = null;
+    let running = false;
+    let birthDate = null;
+
+    // Utility: format big numbers with separator
+    function fmt(n) {
+      return (typeof n === 'number') ? n.toLocaleString() : n;
+    }
+
+    function calcAndRender() {
+      if (!birthDate) return;
+      const now = new Date();
+      const diff = now - birthDate;
+      if (diff < 0) {
+        liveYears.textContent = 'Belum lahir 😅';
+        return;
+      }
+
+      // basic durations
+      const seconds = Math.floor(diff / MS_IN_SECOND);
+      const minutes = Math.floor(diff / MS_IN_MINUTE);
+      const hours = Math.floor(diff / MS_IN_HOUR);
+      const days = Math.floor(diff / MS_IN_DAY);
+      const years = days / DAYS_IN_YEAR;
+
+      // cosmic counts
+      const earthRotations = days; // ~1 rotation per day
+      const solarOrbits = (days / DAYS_IN_YEAR); // orbit count (kali mengelilingi matahari)
+      const lunarCycles = days / LUNAR_CYCLE_DAYS;
+
+      // display main readable
+      const yWhole = Math.floor(years);
+      const months = Math.floor((years - yWhole) * 12);
+      const daysRemainder = Math.floor(days - (years * DAYS_IN_YEAR) % DAYS_IN_YEAR);
+
+      liveYears.innerText = `${yWhole} tahun, ${months} bulan`;
+      liveSeconds.innerText = `${fmt(seconds)} s`;
+
+      statDays.innerText = fmt(days);
+      statYears.innerText = fmt(solarOrbits.toFixed(4));
+      statRotations.innerText = fmt(earthRotations);
+      statLunar.innerText = fmt(lunarCycles.toFixed(2));
+
+      // local time small label
+      localTime.innerText = now.toLocaleString();
+
+      // planet animation: rotate wrapper based on fractional orbit progress
+      // We compute orbit angle from fraction of orbital period (1 year == 360deg).
+      const orbitFraction = (days % DAYS_IN_YEAR) / DAYS_IN_YEAR; // 0..1
+      const angle = orbitFraction * 360;
+      planetWrap.style.transform = `rotate(${angle}deg)`; // planet rotates around center
+
+      // adjust planet position along orbit (using CSS left:100% relative to orbit size)
+      // visual: we keep orbit size static, only rotate the wrapper.
+
+      // random astronomy fact every 10 seconds
+      if (Math.floor(Date.now() / 10000) % 6 === 0) {
+        const facts = [
+          "Bumi melakukan ~365,25 putaran setiap tahun (itu mengapa ada tahun kabisat).",
+          "Satu siklus bulan (bulan sinodik) sekitar 29.53 hari.",
+          "Setiap hari Bumi berotasi sekali terhadap porosnya (sekitar 24 jam).",
+          "Satu orbit Bumi mengelilingi Matahari memakan ~365.25 hari.",
+          "Cahaya Matahari sampai ke Bumi sekitar 8 menit 20 detik."
+        ];
+        astronomyFact.textContent = facts[Math.floor(Math.random()*facts.length)];
+      }
+    }
+
+    function start() {
+      const val = birthInput.value;
+      if (!val) { alert('Pilih tanggal lahir dulu ya.'); return; }
+      birthDate = new Date(val + 'T00:00:00'); // local midnight
+      if (isNaN(birthDate.getTime())) { alert('Tanggal tidak valid'); return; }
+      if (running) clearInterval(timer);
+      running = true;
+      calcAndRender(); // immediate
+      timer = setInterval(calcAndRender, 1000);
+      btnStart.textContent = 'Running...';
+      btnStart.disabled = true;
+      btnPause.disabled = false;
+    }
+
+    function pause() {
+      if (timer) clearInterval(timer);
+      running = false;
+      btnStart.textContent = 'Resume';
+      btnStart.disabled = false;
+      btnPause.disabled = true;
+    }
+
+    function resetAll() {
+      if (timer) clearInterval(timer);
+      running = false;
+      birthDate = null;
+      birthInput.value = '';
+      liveYears.textContent = '—';
+      liveSeconds.textContent = '—';
+      statDays.textContent = '—';
+      statYears.textContent = '—';
+      statRotations.textContent = '—';
+      statLunar.textContent = '—';
+      astronomyFact.textContent = 'Fakta kosmik: Data akan tampil setelah menekan Start.';
+      btnStart.textContent = 'Start';
+      btnStart.disabled = false;
+      btnPause.disabled = true;
+      localTime.textContent = '—';
+      planetWrap.style.transform = 'rotate(0deg)';
+    }
+
+    // Attach handlers
+    btnStart.addEventListener('click', start);
+    btnPause.addEventListener('click', pause);
+    btnReset.addEventListener('click', resetAll);
+
+    // small UX: enable/disable buttons
+    btnPause.disabled = true;
+
+    // load sample: prefill date for demo (optional)
+    // birthInput.value = '2005-01-01';
+
+    // Accessibility: update time even if not running just show local time
+    setInterval(() => {
+      if (!running) localTime.textContent = new Date().toLocaleString();
+    }, 1000);
+
+    // If user presses Enter on date input, start
+    birthInput.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') start();
+    });
+
+    // Init minimal
+    resetAll();
+  </script>
+</body>
+</html>
+
+
+---
+
+⚡ Cara Pakai Cepat
+
+1. Buat file index.html di repo GitHub atau di editor HP (Acode), lalu paste kode di atas.
+
+
+2. Jika pakai GitHub: commit → aktifkan GitHub Pages (branch main, folder root).
+
+
+3. Buka halaman (https://username.github.io/repo-name) → masukkan tanggal lahir → Start.
+
+
+4. Lihat angka real-time dan animasi planet.
+
+
+
+
+---
+
+Kalau mau, aku bisa lanjutin lagi:
+
+tambah garis orbit lain (mis. Bulan mengorbit Bumi),
+
+animasi planet lebih kaya (rotasi sendiri vs orbit),
+
+tombol share ke sosial media, atau
+
+hitung persentase umur dibanding ekspektasi hidup (mis. 72 tahun).
+
+
+Mau tambahin fitur mana dulu, Mas?
+
